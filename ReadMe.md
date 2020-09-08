@@ -13,12 +13,17 @@ compress the target files.
 
 ### Configuration File Syntax
 
-`Source:      <Directory path that contains the following files>
+```Source:      <Directory path that contains the following files>
+
 Destination:  <Directory path into which to move/copy the files>
+
 Action:       <Move/Copy>
+
   - file01.txt
+  
   - \subfolder1\              <Copies or moves all files and directories in subfolder1>
-  - \subfolder2\file02.ini`
+  
+  - \subfolder2\file02.ini```
 
 ### Technical Information
 
