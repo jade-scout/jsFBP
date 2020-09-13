@@ -24,6 +24,14 @@ Action:       <Move/Copy>
 
 ### Technical Information
 
-Platform (tested): Windows 10
+Platforms (tested): Windows 10, Ubuntu 19.04
 
-Python Version: 3.6
+Python Version: 3.6, 3.7
+
+### Change Log
+v1.0.1 - Fix some path validation errors while running on Linux. If a directory to be
+         copied is already in the destination directory, the one in the destination
+         directory is deleted and replaced, instead of erroring. Add tolerance for
+         missing or unecessary path delimiters.
+
+v1.0.0 - First release

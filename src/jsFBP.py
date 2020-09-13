@@ -6,7 +6,7 @@
 jsFBP is a simple file backup program.
 
 Name:     jsFBP (jade-scout File Backup Program)
-Version:  1.0.0
+Version:  1.0.1
 Author:   jade-scout
 """
 
@@ -22,8 +22,9 @@ HEADER_LENGTH = 3
 
 def main():
     """Start program."""
-    parser = argparse.ArgumentParser(description="jsFBP is a simple program"
-                                     "for moving and copying files.")
+    parser = argparse.ArgumentParser(
+        description="jsFBP is a simple program" "for moving and copying files."
+    )
     parser.add_argument("config_file", help="name of the configuration file")
 
     args = parser.parse_args()
@@ -56,11 +57,12 @@ def main():
                     break
             else:
                 break
-        file_list = files.file_list(path_line_num + HEADER_LENGTH,
-                                    os.fsdecode(paths[0]))
+        file_list = files.file_list(
+            path_line_num + HEADER_LENGTH, os.fsdecode(paths[0])
+        )
         action = files.action(path_line_num + HEADER_LENGTH - 1)
 
-        if not(syntax_check) and util.ERRORS_FOUND == 0:
+        if not (syntax_check) and util.ERRORS_FOUND == 0:
             util.print_info("Processing file list #: {}".format(i + 1))
             core.backup_files(paths[0], paths[1], file_list, action)
         path_line_num = files.last_file_line + 1
@@ -69,8 +71,7 @@ def main():
     if util.ERRORS_FOUND == 0:
         util.print_info("Success!")
     else:
-        util.print_info("{} Errors found. Program aborted".format(
-            util.ERRORS_FOUND))
+        util.print_info("{} Error(s) found. Program aborted".format(util.ERRORS_FOUND))
 
 
 if __name__ == "__main__":

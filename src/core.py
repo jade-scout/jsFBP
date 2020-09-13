@@ -31,10 +31,9 @@ class DirectoryPaths:
         Returns None if the path is invalid.
         """
         if platform.system() == "Windows":
-            result = re.findall("^[^\\//]+:+(\\\\{1,1}[^\\/*\"<>|:?]*)+\\\\*$",
-                                path)
+            result = re.findall('^[^\\//]+:+(\\\\{1,1}[^\\/*"<>|:?]*)+\\\\*$', path)
         else:
-            result = re.findall("^(//{1,1}[^\\/*\"<>|:?]*)+//*$", path)
+            result = re.findall('^(/{1,1}[^\\\\/*"<>|:?]*)+/*$', path)
 
         # If the path is invalid, re.findall will return an empty list
         try:
@@ -56,7 +55,7 @@ class DirectoryPaths:
         # Initialize self.paths as an empty list
         self.paths = list()
         try:
-            config_file = open(self.config_file_name, 'r')
+            config_file = open(self.config_file_name, "r")
 
         except FileNotFoundError:
             util.handle_error(util.CONFIG_FILE_NOT_FOUND, True, -1)
@@ -89,25 +88,28 @@ class DirectoryPaths:
 
             # Strip the leading descriptors and any trailing characters from
             # the directory path
-            i = source_dir.find(':', 0) + 1
+            i = source_dir.find(":", 0) + 1
             source_dir = source_dir[i:]
             source_dir = source_dir.strip(" \t\n")
 
-            if self.is_path(source_dir) is False or os.path.exists(
-                    source_dir) is False:
-                util.handle_error(util.SRC_DIR_MISSING, True,
-                                  self.path_line_num + 1)
+            # If path does not have a delimiter at the end, add one
+            if not (source_dir.endswith(util.delimiter())):
+                source_dir = source_dir + util.delimiter()
+
+            if self.is_path(source_dir) is False or os.path.exists(source_dir) is False:
+                util.handle_error(util.SRC_DIR_MISSING, True, self.path_line_num + 1)
 
             source_dir = os.fsencode(source_dir)
 
-            i = dest_dir.find(':', 0) + 1
+            i = dest_dir.find(":", 0) + 1
             dest_dir = dest_dir[i:]
             dest_dir = dest_dir.strip(" \t\n")
 
-            if self.is_path(dest_dir) is False or os.path.exists(
-                    dest_dir) is False:
-                util.handle_error(util.DEST_DIR_MISSING, True,
-                                  self.path_line_num + 2)
+            if not (dest_dir.endswith(util.delimiter())):
+                dest_dir = dest_dir + util.delimiter()
+
+            if self.is_path(dest_dir) is False or os.path.exists(dest_dir) is False:
+                util.handle_error(util.DEST_DIR_MISSING, True, self.path_line_num + 2)
 
             dest_dir = os.fsencode(dest_dir)
 
@@ -128,7 +130,7 @@ class Files:
     def action(self, action_line_offset):
         """Get the action that will be applied to the file list."""
         try:
-            config_file = open(self.config_file_name, 'r')
+            config_file = open(self.config_file_name, "r")
 
         except FileNotFoundError:
             util.handle_error(util.CONFIG_FILE_NOT_FOUND, True, -1)
@@ -138,19 +140,17 @@ class Files:
             config_file.close()
             action_line = contents[action_line_offset]
 
-            i = action_line.find(':', 0) + 1
+            i = action_line.find(":", 0) + 1
 
             # If the colon is not found, i == -1 + 1 == 0
             if i == 0:
-                util.handle_error(util.ACTION_CMD_MISSING, True,
-                                  action_line_offset + 1)
+                util.handle_error(util.ACTION_CMD_MISSING, True, action_line_offset + 1)
 
             action_line = action_line[i:]
             action = action_line.strip(" \t\n")
 
-            if not(action in ACTION_CMDS):
-                util.handle_error(util.ACTION_CMD_INVALID, True,
-                                  action_line_offset + 1)
+            if not (action in ACTION_CMDS):
+                util.handle_error(util.ACTION_CMD_INVALID, True, action_line_offset + 1)
 
             return action
 
@@ -163,7 +163,7 @@ class Files:
         # Initialize self.files as an empty list
         self.files = list()
         try:
-            config_file = open(self.config_file_name, 'r')
+            config_file = open(self.config_file_name, "r")
 
         except FileNotFoundError:
             util.handle_error(util.CONFIG_FILE_NOT_FOUND, True, -1)
@@ -180,18 +180,24 @@ class Files:
 
                 # Break if an empty line is encountered. This means that the
                 # all of the files in the current list have been retrieved.
-                if line == '\n':
+                if line == "\n":
                     break
 
                 if line.startswith("  - ") is False:
-                    util.handle_error(util.FILE_ENTRY_INVALID, True,
-                                      file_list_offset + i + 1)
+                    util.handle_error(
+                        util.FILE_ENTRY_INVALID, True, file_list_offset + i + 1
+                    )
                     self.files.insert(i, "Invalid")
                 else:
                     line = line.strip(" -\n")
+
+                    # Strip any leading delimiters from the file entry
+                    line.lstrip(util.delimiter())
+
                     if os.path.exists(src_dir + line) is False:
-                        util.handle_error(util.FILE_ENTRY_INVALID, True,
-                                          file_list_offset + i + 1)
+                        util.handle_error(
+                            util.FILE_ENTRY_INVALID, True, file_list_offset + i + 1
+                        )
                         self.files.insert(i, "Invalid")
                     else:
                         self.files.insert(i, line)
@@ -212,17 +218,28 @@ def backup_files(source_dir, dest_dir, file_list, action):
     while i < len(file_list):
 
         if action == "Copy":
-            if (platform.system() == "Windows" and file_list[i].endswith(
-                    '\\')) or file_list[i].endswith('//'):
-                shutil.copytree(os.fsdecode(source_dir) + file_list[i],
-                                os.fsdecode(dest_dir) + file_list[i])
+            if file_list[i].endswith("\\") or file_list[i].endswith("/"):
+                try:
+                    shutil.copytree(
+                        os.fsdecode(source_dir) + file_list[i],
+                        os.fsdecode(dest_dir) + file_list[i],
+                    )
+                except FileExistsError:
+                    shutil.rmtree(os.fsdecode(dest_dir) + file_list[i])
+                    shutil.copytree(
+                        os.fsdecode(source_dir) + file_list[i],
+                        os.fsdecode(dest_dir) + file_list[i],
+                    )
             else:
-                shutil.copy(os.fsdecode(source_dir) + file_list[i],
-                            os.fsdecode(dest_dir))
+                shutil.copy(
+                    os.fsdecode(source_dir) + file_list[i], os.fsdecode(dest_dir)
+                )
 
         if action == "Move":
-            shutil.move(os.fsdecode(source_dir) + file_list[i],
-                        os.fsdecode(dest_dir) + file_list[i])
+            shutil.move(
+                os.fsdecode(source_dir) + file_list[i],
+                os.fsdecode(dest_dir) + file_list[i],
+            )
         i += 1
 
     return
